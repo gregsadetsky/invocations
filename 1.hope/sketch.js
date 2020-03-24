@@ -1,12 +1,15 @@
 /*
-
   example based on
   https://p5js.org/examples/motion-non-orthogonal-reflection.html
-
-
-
 */
 
+// GRISHA: 
+// this sketch uses sound. it requires you to click the canvas in order to start, sorry
+// didn't have time to fix it
+// the sounds you hear playing are just some random samples I had. I wanted to record other
+// ones but didn't have enough time in my 30 minuts. Feel free to replace them!
+
+// what am I saying? ACTUALLY, FEEL FREE TO CHANGE EVERYTHING
 
 
 document.addEventListener("DOMContentLoaded", function() {
@@ -33,13 +36,47 @@ let base2;
 // Variables related to moving ball
 let positions = [];
 let velocities = [];
+// Added these two arrays for detecting when balls enter the circle and controlling color
+let has_entered = [];
+let color_lerps = [];
 let r = 6;
 let speed = 1.5;
 
+// Array containing sound samples
+let samples = [];
+
+// Variables for large circle position and size
+let area_position;
+let area_diam;
+
 let NMB_BALLS = 500;
+
+// Base colors for balls
+
+let color_a;
+let color_b;
+
+
+
+function preload(){
+
+  // Load sounds into array
+ 
+    for(var i = 0 ; i < 7 ; i++ ){
+      var aux = loadSound('sounds/' + (i) + '.wav');
+      samples.push(aux);
+    }
+
+}
+
 
 function setup() {
   createCanvas(windowWidth, windowHeight);
+
+  //base colors for balls
+
+  color_a = color(130, 3, 51);
+  color_b = color(201, 40, 62);
 
   fill(128);
   base1 = createVector(0, height - 150);
@@ -48,6 +85,11 @@ function setup() {
   //randomize base top
   base1.y = random(height - 100, height);
   base2.y = random(height - 100, height);
+
+  //large circle parameters
+
+  area_position = createVector(width/2, height/2);
+  area_diam = windowWidth/4;
 
   //start ellipse at middle top of screen
   for(var i = 0; i < NMB_BALLS; i++) {
@@ -58,17 +100,23 @@ function setup() {
     velocity.mult(speed);
 
     velocities.push(velocity)
+
+    // populate colision and color arrays
+    has_entered.push(false);
+    // chose random value for interpolating between base colors
+    color_lerps.push(random(1));
   }
+
 }
 
 function draw() {
   //draw background
-  fill(0, 12);
+  fill(0,20);
   noStroke();
   rect(0, 0, width, height);
 
   //draw base
-  fill(200);
+  fill( 46, 17, 45);
   quad(base1.x, base1.y, base2.x, base2.y, base2.x, height, 0, height);
 
   //calculate base top normal
@@ -76,6 +124,7 @@ function draw() {
   baseDelta.normalize();
   let normal = createVector(-baseDelta.y, baseDelta.x);
   let intercept = p5.Vector.dot(base1, normal);
+  
 
   for(var i = 0; i < NMB_BALLS; i++) {
     let position = positions[i];
@@ -83,7 +132,7 @@ function draw() {
 
     //draw ellipse
     noStroke();
-    fill(255);
+    fill(lerpColor(color_a, color_b, color_lerps[i]));
     ellipse(position.x, position.y, r * 2, r * 2);
 
     //move ellipse
@@ -135,5 +184,53 @@ function draw() {
       velocity.y *= -1;
 
     }
+
   }
+
+  // draw large circle
+
+  noStroke();
+  fill(240, 67, 58,40);
+  ellipse(area_position.x, area_position.y, area_diam, area_diam);
+  fill(255,240,0,20);
+  ellipse(area_position.x, area_position.y, 20, 20);
+
+
+  // I do this on another for() cycle because of the order in which things get drawn
+  // (first balls, then large circle, then collisions)
+
+  for(var i = 0; i < NMB_BALLS; i++) {
+    let position = positions[i];
+
+      // if a ball is inside the large circle
+      if(dist(position.x, position.y, area_position.x, area_position.y) < area_diam/2){
+        // if it wasn't already inside
+      if(!has_entered[i]){
+        // draw a small circle indicating the collision
+        fill(128, 39, 67, 128);
+        noStroke();
+        ellipse(position.x, position.y, 50, 50);
+        // change state to already inside
+        has_entered[i] = true;
+
+        // select random sample, select random volume, play sample
+        let sample_index = int(random(samples.length));
+        samples[sample_index].setVolume(random(1));
+        samples[sample_index].play();
+
+        // draw faint line to center of large circle
+        stroke(  240, 67, 58, 90);
+        line(position.x, position.y, area_position.x, area_position.y);
+      }
+
+    }else{  // if the ball isn't inside the large circle
+      // change state to not inside
+      has_entered[i] = false;
+
+    }
+
+  }
+
 }
+
+
