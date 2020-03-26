@@ -56,7 +56,16 @@ let NMB_BALLS = 500;
 let color_a;
 let color_b;
 
+var started = false;
 
+var button = null;
+
+var audioCtx = null;
+var oscillator = null;
+var volume = null;
+
+var bigCircleAlpha = 40;
+var oscillatorFreq = 0;
 
 function preload(){
 
@@ -67,6 +76,30 @@ function preload(){
       samples.push(aux);
     }
 
+  button = createButton('INVOKE');
+  button.size(600)
+  button.position(300, 300);
+  button.mousePressed(buttonHandler);
+}
+
+function buttonHandler() {
+  started = true
+  button.remove()
+
+
+  audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+
+  // create Oscillator node
+  oscillator = audioCtx.createOscillator();
+
+  volume = audioCtx.createGain();
+  volume.connect(audioCtx.destination);
+  volume.gain.value = 0
+
+  oscillator.type = 'square';
+  oscillator.frequency.setValueAtTime(100, audioCtx.currentTime); // value in hertz
+  oscillator.connect(volume);
+  oscillator.start()
 }
 
 
@@ -110,8 +143,12 @@ function setup() {
 }
 
 function draw() {
+  if(!started) {
+    return
+  }
+
   //draw background
-  fill(0,20);
+  fill(0,4);
   noStroke();
   rect(0, 0, width, height);
 
@@ -190,7 +227,7 @@ function draw() {
   // draw large circle
 
   noStroke();
-  fill(240, 67, 58,40);
+  fill(240, 67, 58, bigCircleAlpha);
   ellipse(area_position.x, area_position.y, area_diam, area_diam);
   fill(255,240,0,20);
   ellipse(area_position.x, area_position.y, 20, 20);
@@ -199,38 +236,71 @@ function draw() {
   // I do this on another for() cycle because of the order in which things get drawn
   // (first balls, then large circle, then collisions)
 
+  var ballIndicesToRemove = [];
+
   for(var i = 0; i < NMB_BALLS; i++) {
     let position = positions[i];
 
       // if a ball is inside the large circle
       if(dist(position.x, position.y, area_position.x, area_position.y) < area_diam/2){
-        // if it wasn't already inside
-      if(!has_entered[i]){
-        // draw a small circle indicating the collision
-        fill(128, 39, 67, 128);
-        noStroke();
-        ellipse(position.x, position.y, 50, 50);
-        // change state to already inside
-        has_entered[i] = true;
+          // if it wasn't already inside
+        if(!has_entered[i]){
+          // draw a small circle indicating the collision
+          fill(128, 39, 67, 128);
+          noStroke();
+          ellipse(position.x, position.y, 50, 50);
+          // change state to already inside
+          has_entered[i] = true;
 
-        // select random sample, select random volume, play sample
-        let sample_index = int(random(samples.length));
-        samples[sample_index].setVolume(random(1));
-        samples[sample_index].play();
+          // // select random sample, select random volume, play sample
+          // let sample_index = int(random(samples.length));
+          // samples[sample_index].setVolume(random(1));
+          // samples[sample_index].play();
 
-        // draw faint line to center of large circle
-        stroke(  240, 67, 58, 90);
-        line(position.x, position.y, area_position.x, area_position.y);
-      }
+          oscillatorFreq = (oscillatorFreq + 10) % 1000
+          volume.gain.value = 1
+          oscillator.frequency.setValueAtTime(300 + oscillatorFreq, audioCtx.currentTime);
+          setTimeout(function() {
+            volume.gain.value = 0
+          }, random(50 + 2 * Math.log(max(0, bigCircleAlpha))))
 
-    }else{  // if the ball isn't inside the large circle
+          // draw faint line to center of large circle
+          stroke(  240, 67, 58, 90);
+          line(position.x, position.y, area_position.x, area_position.y);
+
+          ballIndicesToRemove.push(i)
+
+          area_position.x += random(-1, 1)
+          area_position.y += random(-1, 1)
+
+          bigCircleAlpha -= 0.6
+        }
+    } else {  // if the ball isn't inside the large circle
       // change state to not inside
       has_entered[i] = false;
-
     }
-
   }
 
+  // console.log('ballIndicesToRemove', ballIndicesToRemove);
+
+  var newPositions = [];
+  // var newVelocities = []
+
+  for(var i = 0; i < NMB_BALLS; i++) {
+    if(ballIndicesToRemove.indexOf(i) == -1) {
+      newPositions.push(positions[i])
+  //     newVelocities.push(velocities[i])
+    }
+  }
+
+  positions = newPositions;
+  // velocities = newVelocities;
+
+  // console.log('ballIndicesToRemove.length', ballIndicesToRemove.length);
+  NMB_BALLS -= ballIndicesToRemove.length;
+  // console.log('NMB_BALLS', NMB_BALLS);
+
+  bigCircleAlpha += 0.04
 }
 
 
