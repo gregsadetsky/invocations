@@ -45,6 +45,8 @@ let speed = 1.5;
 // Variables for large circle position and size
 let area_position;
 let area_diam;
+// positon incremente for each frame
+let area_increment = 2;
 
 let NMB_BALLS = 500;
 
@@ -64,6 +66,9 @@ var volume = null;
 var bigCircleAlpha = 40;
 var oscillatorFreq = 0;
 
+// parameterized the general background alpha
+let bg_alpha = 4;
+
 function preload(){
   button = createButton('INVOKE');
   button.size(600)
@@ -78,6 +83,8 @@ function buttonHandler() {
 
   audioCtx = new (window.AudioContext || window.webkitAudioContext)();
 
+
+
   // create Oscillator node
   oscillator = audioCtx.createOscillator();
 
@@ -85,7 +92,8 @@ function buttonHandler() {
   volume.connect(audioCtx.destination);
   volume.gain.value = 0
 
-  oscillator.type = 'square';
+// changed oscillator to sawwave
+  oscillator.type = 'saw';
   oscillator.frequency.setValueAtTime(100, audioCtx.currentTime); // value in hertz
   oscillator.connect(volume);
   oscillator.start()
@@ -109,8 +117,7 @@ function setup() {
   base2.y = random(height - 100, height);
 
   //large circle parameters
-
-  area_position = createVector(width/2, height/2);
+  area_position = createVector(0, height/2);
   area_diam = windowWidth/4;
 
   //start ellipse at middle top of screen
@@ -136,8 +143,14 @@ function draw() {
     return
   }
 
+  // move big cirlce, make it wrap around
+  area_position.x += area_increment;
+  if(area_position.x >width){
+    area_position.x = 0;
+  }
+
   //draw background
-  fill(0,4);
+  fill(0,bg_alpha);
   noStroke();
   rect(0, 0, width, height);
 
@@ -248,10 +261,11 @@ function draw() {
 
           oscillatorFreq = (oscillatorFreq + 10) % 1000
           volume.gain.value = 1
-          oscillator.frequency.setValueAtTime(300 + oscillatorFreq, audioCtx.currentTime);
+          // changed oscillator frequency to be dependent on big circle position
+          oscillator.frequency.setValueAtTime(map(area_position.x,0,width,100,1000) , audioCtx.currentTime);
           setTimeout(function() {
             volume.gain.value = 0
-          }, random(50 + 2 * Math.log(max(0, bigCircleAlpha))))
+          }, 50)
 
           // draw faint line to center of large circle
           stroke(  240, 67, 58, 90);
@@ -289,7 +303,18 @@ function draw() {
   NMB_BALLS -= ballIndicesToRemove.length;
   // console.log('NMB_BALLS', NMB_BALLS);
 
-  bigCircleAlpha += 0.04
+  // if there are no more balls
+  if(NMB_BALLS == 0){
+    // freeze large ball
+    // incremente background alpha (fade it to black)
+    area_increment = 0;
+    bg_alpha += 2;
+
+  }
+
+  /// slightly modified this value
+
+  bigCircleAlpha += 0.05
 }
 
 
