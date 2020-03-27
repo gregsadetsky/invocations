@@ -42,9 +42,6 @@ let color_lerps = [];
 let r = 6;
 let speed = 1.5;
 
-// Array containing sound samples
-let samples = [];
-
 // Variables for large circle position and size
 let area_position;
 let area_diam;
@@ -68,14 +65,6 @@ var bigCircleAlpha = 40;
 var oscillatorFreq = 0;
 
 function preload(){
-
-  // Load sounds into array
- 
-    for(var i = 0 ; i < 7 ; i++ ){
-      var aux = loadSound('sounds/' + (i) + '.wav');
-      samples.push(aux);
-    }
-
   button = createButton('INVOKE');
   button.size(600)
   button.position(300, 300);
