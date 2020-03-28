@@ -50,6 +50,7 @@ let area_increment = 2;
 
 let NMB_BALLS = 500;
 
+
 // Base colors for balls
 
 let color_a;
@@ -71,7 +72,6 @@ let bg_alpha = 4;
 
 function preload(){
   button = createButton('INVOKE');
-  button.size(600)
   button.position(300, 300);
   button.mousePressed(buttonHandler);
 }
@@ -80,23 +80,7 @@ function buttonHandler() {
   started = true
   button.remove()
 
-
-  audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-
-
-
-  // create Oscillator node
-  oscillator = audioCtx.createOscillator();
-
-  volume = audioCtx.createGain();
-  volume.connect(audioCtx.destination);
-  volume.gain.value = 0
-
-// changed oscillator to sawwave
-  oscillator.type = 'saw';
-  oscillator.frequency.setValueAtTime(100, audioCtx.currentTime); // value in hertz
-  oscillator.connect(volume);
-  oscillator.start()
+  audioStart()
 }
 
 
@@ -254,19 +238,6 @@ function draw() {
           // change state to already inside
           has_entered[i] = true;
 
-          // // select random sample, select random volume, play sample
-          // let sample_index = int(random(samples.length));
-          // samples[sample_index].setVolume(random(1));
-          // samples[sample_index].play();
-
-          oscillatorFreq = (oscillatorFreq + 10) % 1000
-          volume.gain.value = 1
-          // changed oscillator frequency to be dependent on big circle position
-          oscillator.frequency.setValueAtTime(map(area_position.x,0,width,100,1000) , audioCtx.currentTime);
-          setTimeout(function() {
-            volume.gain.value = 0
-          }, 50)
-
           // draw faint line to center of large circle
           stroke(  240, 67, 58, 90);
           line(position.x, position.y, area_position.x, area_position.y);
@@ -276,7 +247,8 @@ function draw() {
           area_position.x += random(-1, 1)
           area_position.y += random(-1, 1)
 
-          bigCircleAlpha -= 0.6
+          bigCircleAlpha = max(0, bigCircleAlpha - 1)
+          area_diam = area_diam - 0.6 < 3 ? 3 : area_diam - 0.6
         }
     } else {  // if the ball isn't inside the large circle
       // change state to not inside
@@ -310,11 +282,21 @@ function draw() {
     area_increment = 0;
     bg_alpha += 2;
 
+    // fill(50);
+    textSize(50);
+    text('Hope', 100, 100, 500, 500); // Text wraps within text box
+    // fill(50);
+    textSize(30);
+    text('by Ariel Uzal & Greg Sadetsky', 100, 155, 500, 500); // Text wraps within text box
   }
 
   /// slightly modified this value
 
-  bigCircleAlpha += 0.05
+  bigCircleAlpha += 0.01
+
+  area_diam = min(windowWidth/4, area_diam + 0.01)
+
+  audioAdjustBandpassHz(40 + Math.log(max(1, NMB_BALLS)) * 200)
 }
 
 
