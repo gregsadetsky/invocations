@@ -23,8 +23,8 @@ the code is [on github](https://github.com/gregsadetsky/invocations). the sketch
 
 ### topic
 
-TBD
+*Making*
 
 ### code
 
-TBD
+[1.making/](1.making/)
