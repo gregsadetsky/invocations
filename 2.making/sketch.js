@@ -12,12 +12,12 @@ let diam = 0;
 // maximum diameter of stain
 let max_diam;
 // how much the stain grows per frame
-let diam_increment = 2;
+let diam_increment = 1;
 // control variable for sizes of different layers of stain, only apparent if using low opacity
-let max_variance = .4;
+let max_variance = .04;
 
 // how detailed is each "circle" that comprises a stain
-let circle_detail = 200;
+let circle_detail = 2000;
 // how many layers does a stain have, only apparent if using low opacity
 let layers = 5;
 
@@ -28,11 +28,12 @@ let color_b;
 // set to 5 to see original form. I left it at 255 cause it looks great
 let stain_opacity = 255;
 
+let lerp_start_value;
 
 function setup() {
 	createCanvas(windowWidth, windowHeight);
 	noStroke();
-	background(20,0,0);
+	background(255);
 
 	// create some colors
 	color_a = color(101, 133, 154, stain_opacity);
@@ -40,13 +41,9 @@ function setup() {
 
 	// reset the stain variables
 	resetStain();
-	
 }
 
 function draw() {
-
-
-
 	// fix random seed for noise displacement variables. could be avoided using an array but 
 	// don't have enough time
 	randomSeed(0);
@@ -97,19 +94,30 @@ function draw() {
 function resetStain(){
 	// return diameter to 0
 	diam = 0;
-	// choose new position for stain
-	// I'm using the native js random function cause I've seeded the p5.js random function
-	// I know it's terrible but it works
-   	stain_x = Math.random() * width;
-	stain_y = Math.random() * height;
-	// choose a random value between 50 and 200 for the max size of new stain
-	max_diam = 50 + ( Math.random() * 150)
-	// choose a random color between the two base colors
-	fill(lerpColor(color_a, color_b, Math.random()));
 }
 
+function mouseHandler() {
+  // choose new position for stain
+  // I'm using the native js random function cause I've seeded the p5.js random function
+  // I know it's terrible but it works
+  stain_x = mouseX;
+  stain_y = mouseY;
+  // choose a random value between 50 and 200 for the max size of new stain
+  max_diam = 50 + (Math.random() * 150)
+  // choose a random color between the two base colors
+
+  lerp_start_value = Math.random()
+
+  fill(lerpColor(color_a, color_b, lerp_start_value));
+}
+
+
+function mouseDragged() {
+  mouseHandler()
+}
+
+function mouseClicked() {
+  mouseHandler()
+}
   
- 
-
-
  
