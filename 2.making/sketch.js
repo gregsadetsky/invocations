@@ -8,17 +8,21 @@ let drop_frequency = 500; // how many mS between drops
 let last_drop_time = 0; // time of last drop
 
 let render;  // created a p5.Renderer to have the cumulative stains on
+let canvasReference;
 
 function setup() {
-	createCanvas(windowWidth, windowHeight);
+	canvasReference = createCanvas(windowWidth, windowHeight);
 	// make renderer have same size as window
 	render = createGraphics(windowWidth, windowHeight);
 	background(255);
 	render.background(255);
-
 }
 
+let contourPath = []
+
 function draw() {
+  let removedStains = false;
+
 	// draw the stain acumullation as the background
 	image(render,0,0);
 
@@ -32,8 +36,28 @@ function draw() {
 	for(let i = stains.length-1 ; i >=0  ; i--){
 		if(stains[i].readyToErase()){
 			stains.splice(i,1);
+      removedStains = true;
 		}
 	}
+
+  if(removedStains) {
+    contourPath = findContourPath(canvasReference.elt)
+  }
+
+  if(contourPath.length) {  
+    fill(lerpColor(
+      color(101, 133, 154, 0.5),
+      color(253, 136, 107, 0.5),
+      0.5)
+    );
+    strokeWeight(4);
+    stroke(51);
+    beginShape();
+    contourPath.forEach(function(point) {
+      vertex(point[0], point[1]);
+    })
+    endShape(CLOSE);
+  }
 }
 
 function mouseHandler() {
